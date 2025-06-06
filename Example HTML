@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Agent Match Flow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* GLOBAL */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: #f8f9fa;
+    }
+
+    /* STEP 1 */
+    .agent-selector {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    .agent-card {
+      flex: 1 1 260px;
+      max-width: 320px;
+      min-width: 240px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+      transition: 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .agent-card img {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #48C9B0;
+      margin-bottom: 10px;
+    }
+    .agent-card.selected {
+      border: 3px solid #0057ff;
+      background-color: #f0f8ff;
+    }
+    .agent-location {
+      font-size: 14px;
+      color: #444;
+      margin: 6px 0;
+    }
+    .agent-tags {
+      font-size: 13px;
+      color: #007965;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .agent-bio {
+      font-size: 14px;
+      color: #555;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    .compare-button {
+      display: none;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .compare-button button {
+      background: #0057ff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    /* STEP 2 */
+    .comparison-chart {
+      overflow-x: auto;
+      padding: 20px;
+    }
+    .comparison-chart table {
+      width: 100%;
+      min-width: 600px;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f4f6fa;
+      font-weight: 600;
+      text-align: center;
+      font-size: 16px;
+    }
+    td:first-child {
+      font-weight: 600;
+      background-color: #fafafa;
+      width: 25%;
+    }
+    .agent-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 6px;
+      border: 3px solid #0057ff;
+    }
+    .check {
+      color: #28a745;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .x {
+      color: #dc3545;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .select-agent {
+      background-color: #0057ff;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .select-agent:hover {
+      background-color: #0040cc;
+    }
+
+    /* STEP 3 */
+    .thank-you-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f0faff;
+      padding: 20px;
+    }
+    .confirmation-card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+    .agent-final-photo {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #48C9B0;
+      margin-bottom: 20px;
+    }
+    h2 {
+      color: #002f6c;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 15px;
+      color: #444;
+      margin-bottom: 10px;
+    }
+    .agent-summary {
+      text-align: left;
+      background-color: #f4f6fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #333;
+    }
+    .back-home {
+      display: inline-block;
+      margin-top: 24px;
+      background: #0057ff;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .back-home:hover {
+      background: #0040cc;
+    }
+
+    @media screen and (max-width: 600px) {
+      .agent-card {
+        flex: 1 1 100%;
+        max-width: 100%;
+      }
+      th, td {
+        font-size: 14px;
+        padding: 10px;
+      }
+      .select-agent {
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- STEP 1: Agent Selection -->
+<div id="step1">
+  <div class="agent-selector" id="agent-selector"></div>
+  <div class="compare-button">
+    <button onclick="goToStep2()">Compare Agents</button>
+  </div>
+</div>
+
+<!-- STEP 2: Agent Comparison -->
+<div id="step2" style="display:none;">
+  <div class="comparison-chart" id="comparison-content"></div>
+</div>
+
+<!-- STEP 3: Final Match -->
+<div id="step3" style="display:none;">
+  <div class="thank-you-page">
+    <div class="confirmation-card">
+      <canvas id="confetti-canvas"></canvas>
+      <img id="final-agent-photo" src="" alt="Matched Agent" class="agent-final-photo">
+      <h2>You're All Set!</h2>
+      <p id="final-text"></p>
+      <div class="agent-summary" id="final-summary"></div>
+      <a href="https://www.google.com/search?q=your+agency+name+google+review" target="_blank" class="back-home">Leave a Google Review</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+const agents = [
+  {
+    id: '1',
+    name: 'Jane Doe',
+    photo: 'https://via.placeholder.com/100',
+    location: 'Austin, TX · 13 mi',
+    tags: 'Life · Auto · Bilingual',
+    bio: 'Jane helps families protect what matters most.',
+    experience: '7 years',
+    languages: 'English, Spanish'
+  },
+  {
+    id: '2',
+    name: 'Michael Smith',
+    photo: 'https://via.placeholder.com/100',
+    location: 'Dallas, TX · 20 mi',
+    tags: 'Health · Family Plans',
+    bio: 'Michael specializes in affordable health plans.',
+    experience: '5 years',
+    languages: 'English'
+  },
+  {
+    id: '3',
+    name: 'Lisa Chen',
+    photo: 'https://via.placeholder.com/100',
+    location: 'San Antonio, TX · 37 mi',
+    tags: 'Business · Auto',
+    bio: 'Lisa helps business owners simplify their insurance.',
+    experience: '6 years',
+    languages: 'English, Mandarin'
+  }
+];
+
+let selected = [];
+const selector = document.getElementById('agent-selector');
+const compareBtn = document.querySelector('.compare-button');
+
+agents.forEach(agent => {
+  const card = document.createElement('div');
+  card.classList.add('agent-card');
+  card.dataset.agent = agent.id;
+  card.innerHTML = `
+    <img src="${agent.photo}" alt="${agent.name}">
+    <h3>${agent.name}</h3>
+    <div class="agent-location">${agent.location}</div>
+    <div class="agent-tags">${agent.tags}</div>
+    <div class="agent-bio">${agent.bio}</div>
+  `;
+  card.onclick = () => {
+    if (card.classList.contains('selected')) {
+      card.classList.remove('selected');
+      selected = selected.filter(x => x !== agent.id);
+    } else if (selected.length < 2) {
+      card.classList.add('selected');
+      selected.push(agent.id);
+    }
+    compareBtn.style.display = selected.length === 2 ? 'block' : 'none';
+  };
+  selector.appendChild(card);
+});
+
+function goToStep2() {
+  const [a1, a2] = selected.map(id => agents.find(a => a.id === id));
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('comparison-content').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th><img src="${a1.photo}" class="agent-photo"><br>${a1.name}</th>
+          <th><img src="${a2.photo}" class="agent-photo"><br>${a2.name}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Location</td><td>${a1.location}</td><td>${a2.location}</td></tr>
+        <tr><td>Lines of Business</td><td>${a1.tags}</td><td>${a2.tags}</td></tr>
+        <tr><td>Languages</td><td>${a1.languages}</td><td>${a2.languages}</td></tr>
+        <tr><td>Experience</td><td>${a1.experience}</td><td>${a2.experience}</td></tr>
+        <tr><td>Bio</td><td>${a1.bio}</td><td>${a2.bio}</td></tr>
+        <tr>
+          <td>Choose Agent</td>
+          <td><button class="select-agent" onclick="goToStep3('${a1.name}', '${a1.photo}', '${a1.location}', '${a1.tags}', '${a1.experience}', '${a1.languages}')">Choose ${a1.name.split(' ')[0]}</button></td>
+          <td><button class="select-agent" onclick="goToStep3('${a2.name}', '${a2.photo}', '${a2.location}', '${a2.tags}', '${a2.experience}', '${a2.languages}')">Choose ${a2.name.split(' ')[0]}</button></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+}
+
+function goToStep3(name, photo, location, tags, exp, lang) {
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'block';
+  document.getElementById('final-agent-photo').src = photo;
+  document.getElementById('final-text').innerHTML = `You've been matched with <strong>${name}</strong> — your trusted insurance agent.`;
+  document.getElementById('final-summary').innerHTML = `
+    <p><strong>Location:</strong> ${location}</p>
+    <p><strong>Lines of Business:</strong> ${tags}</p>
+    <p><strong>Experience:</strong> ${exp}</p>
+    <p><strong>Languages:</strong> ${lang}</p>
+  `;
+
+  const duration = 3000;
+  const end = Date.now() + duration;
+  (function frame() {
+    confetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0 }, zIndex: 0 });
+    confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 }, zIndex: 0 });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
+</script>
+</body>
+</html>
